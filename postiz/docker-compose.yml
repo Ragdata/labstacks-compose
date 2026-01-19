@@ -3,13 +3,15 @@ services:
     image: ghcr.io/gitroomhq/postiz-app:latest
     container_name: postiz
     restart: unless-stopped
+    # security_opt:
+    #   - apparmor:unconfined
     environment:
       # === Required Settings
       MAIN_URL: ${MAIN_URL:-http://localhost:4007}
       FRONTEND_URL: ${FRONTEND_URL:-http://localhost:4007}
       NEXT_PUBLIC_BACKEND_URL: ${NEXT_PUBLIC_BACKEND_URL:-http://localhost:4007}
-      JWT_SECRET: ${JWT_SECRET:?Required}
-      DATABASE_URL: postgresql://${DB_USER:-postiz}:${DB_PASSWORD:?Required}@postiz-postgres:5432/${DB_NAME:-postiz}
+      JWT_SECRET: ${JWT_SECRET}
+      DATABASE_URL: postgresql://${DB_USER:-postiz}:${DB_PASSWORD}@postiz-postgres:5432/${DB_NAME:-postiz}
       REDIS_URL: redis://postiz-redis:6379
       BACKEND_INTERNAL_URL: http://localhost:3000
       TEMPORAL_ADDRESS: temporal:7233
@@ -21,11 +23,11 @@ services:
       NEXT_PUBLIC_UPLOAD_DIRECTORY: /uploads
       # === Cloudflare (R2) Settings
       # STORAGE_PROVIDER: cloudflare
-      # CLOUDFLARE_ACCOUNT_ID: ${CLOUDFLARE_ACCOUNT_ID:?Required}
-      # CLOUDFLARE_ACCESS_KEY: ${CLOUDFLARE_ACCESS_KEY:?Required}
-      # CLOUDFLARE_SECRET_ACCESS_KEY: ${CLOUDFLARE_SECRET_ACCESS_KEY:?Required}
-      # CLOUDFLARE_BUCKETNAME: ${CLOUDFLARE_BUCKETNAME:?Required}
-      # CLOUDFLARE_BUCKET_URL: ${CLOUDFLARE_BUCKET_URL:?Required}
+      # CLOUDFLARE_ACCOUNT_ID: ${CLOUDFLARE_ACCOUNT_ID}
+      # CLOUDFLARE_ACCESS_KEY: ${CLOUDFLARE_ACCESS_KEY}
+      # CLOUDFLARE_SECRET_ACCESS_KEY: ${CLOUDFLARE_SECRET_ACCESS_KEY}
+      # CLOUDFLARE_BUCKETNAME: ${CLOUDFLARE_BUCKETNAME}
+      # CLOUDFLARE_BUCKET_URL: ${CLOUDFLARE_BUCKET_URL}
       # CLOUDFLARE_REGION: auto
       # === Social Media API Settings
       X_API_KEY: ${X_API_KEY:-''}
@@ -63,12 +65,12 @@ services:
       # NEXT_PUBLIC_POSTIZ_OAUTH_DISPLAY_NAME: ${NEXT_PUBLIC_POSTIZ_OAUTH_DISPLAY_NAME}
       # NEXT_PUBLIC_POSTIZ_OAUTH_LOGO_URL: ${NEXT_PUBLIC_POSTIZ_OAUTH_LOGO_URL}
       # POSTIZ_GENERIC_OAUTH: ${POSTIZ_GENERIC_OAUTH:-false}
-      # POSTIZ_OAUTH_URL: ${POSTIZ_OAUTH_URL:?Required}
-      # POSTIZ_OAUTH_AUTH_URL: ${POSTIZ_OAUTH_AUTH_URL:?Required}
-      # POSTIZ_OAUTH_TOKEN_URL: ${POSTIZ_OAUTH_TOKEN_URL:?Required}
-      # POSTIZ_OAUTH_USERINFO_URL: ${POSTIZ_OAUTH_USERINFO_URL:?Required}
-      # POSTIZ_OAUTH_CLIENT_ID: ${POSTIZ_OAUTH_CLIENT_ID:?Required}
-      # POSTIZ_OAUTH_CLIENT_SECRET: ${POSTIZ_OAUTH_CLIENT_SECRET:?Required}
+      # POSTIZ_OAUTH_URL: ${POSTIZ_OAUTH_URL}
+      # POSTIZ_OAUTH_AUTH_URL: ${POSTIZ_OAUTH_AUTH_URL}
+      # POSTIZ_OAUTH_TOKEN_URL: ${POSTIZ_OAUTH_TOKEN_URL}
+      # POSTIZ_OAUTH_USERINFO_URL: ${POSTIZ_OAUTH_USERINFO_URL}
+      # POSTIZ_OAUTH_CLIENT_ID: ${POSTIZ_OAUTH_CLIENT_ID}
+      # POSTIZ_OAUTH_CLIENT_SECRET: ${POSTIZ_OAUTH_CLIENT_SECRET}
       # POSTIZ_OAUTH_SCOPE: ${POSTIZ_OAUTH_SCOPE:-openid profile email}  # Optional: uncomment to override default scope
       # === Sentry
       # NEXT_PUBLIC_SENTRY_DSN: ${NEXT_PUBLIC_SENTRY_DSN:-http://spotlight:8969/stream}
@@ -98,8 +100,8 @@ services:
       # LINK_DRIP_API_ENDPOINT: "https://api.linkdrip.com/v1/"
       # LINK_DRIP_SHORT_LINK_DOMAIN: "dripl.ink"
     volumes:
-      - ${HOSTDIR}:/config/
-      - ${VOLDIR}:/uploads/
+      - ${HOSTDIR}/config:/config/
+      - ${VOLDIR}/uploads:/uploads/
     ports:
       - "${HOST_PORT:-4007}:5000"
     networks:
@@ -116,8 +118,10 @@ services:
     image: postgres:17-alpine
     container_name: postiz-postgres
     restart: unless-stopped
+    # security_opt:
+    #   - apparmor:unconfined
     environment:
-      POSTGRES_PASSWORD: ${DB_PASSWORD:?Required}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
       POSTGRES_USER: ${DB_USER:-postiz}
       POSTGRES_DB: ${DB_NAME:-postiz}
     volumes:
@@ -134,6 +138,8 @@ services:
     image: redis:latest
     container_name: postiz-redis
     restart: unless-stopped
+    # security_opt:
+    #   - apparmor:unconfined
     healthcheck:
       test: redis-cli ping
       interval: 10s
@@ -148,6 +154,8 @@ services:
   spotlight:
     image: ghcr.io/getsentry/spotlight:latest
     container_name: spotlight
+    # security_opt:
+    #   - apparmor:unconfined
     pull_policy: always
     networks:
       - postiz-network
@@ -160,6 +168,8 @@ services:
   temporal-elasticsearch:
     image: elasticsearch:7.17.27
     container_name: temporal-elasticsearch
+    # security_opt:
+    #   - apparmor:unconfined
     environment:
       - cluster.routing.allocation.disk.threshold_enabled=true
       - cluster.routing.allocation.disk.watermark.low=512mb
@@ -178,6 +188,8 @@ services:
   temporal-postgresql:
     container_name: temporal-postgresql
     image: postgres:16
+    # security_opt:
+    #   - apparmor:unconfined
     environment:
       POSTGRES_PASSWORD: ${DB_PASSWORD:-temporal}
       POSTGRES_USER: ${DB_USER:-temporal}
@@ -191,6 +203,8 @@ services:
   temporal:
     image: temporalio/auto-setup:1.28.1
     container_name: temporal
+    # security_opt:
+    #   - apparmor:unconfined
     networks:
       temporal-network:
         ipv4_address: ${TEMPORAL_IPv4}
@@ -218,6 +232,8 @@ services:
   temporal-admin-tools:
     container_name: temporal-admin-tools
     image: temporalio/admin-tools:1.28.1-tctl-1.18.4-cli-1.4.1
+    # security_opt:
+    #   - apparmor:unconfined
     environment:
       - TEMPORAL_ADDRESS=temporal:7233
       - TEMPORAL_CLI_ADDRESS=temporal:7233
@@ -231,6 +247,8 @@ services:
   temporal-ui:
     container_name: temporal-ui
     image: temporalio/ui:2.34.0
+    # security_opt:
+    #   - apparmor:unconfined
     environment:
       - TEMPORAL_ADDRESS=temporal:7233
       - TEMPORAL_CORS_ORIGINS=http://127.0.0.1:3000
